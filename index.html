@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Hazi Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-slate-900 p-6 text-center text-white">
+            <div class="mx-auto w-24 h-24 rounded-full border-4 border-slate-700 overflow-hidden mb-3">
+                <img src="foto.png" alt="Barber Fahrul" class="w-full h-full object-cover">
+            </div>
+            <h1 class="text-2xl font-bold">Hazi Studio</h1>
+            <p class="text-slate-400 text-sm">Barber: Fahrul</p>
+        </div>
+
+        <div class="p-6 border-b border-gray-100">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-gray-500 text-sm font-semibold">TARIF</span>
+                <span class="text-green-600 font-bold bg-green-50 px-2 py-1 rounded">Rp 35.000</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-500 text-sm font-semibold">JAM OPERASIONAL</span>
+                <span class="text-gray-800 font-bold text-sm">10:00 – 15:00</span>
+            </div>
+            <p class="mt-4 text-xs text-center text-gray-400 bg-gray-50 p-2 rounded">
+                ⚡ 1 Barber tersedia hari ini. Booking via WhatsApp.
+            </p>
+        </div>
+
+        <div class="p-6 bg-gray-50">
+            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Pilih Jam Booking</h3>
+            <div id="slot-container" class="space-y-3">
+                <div class="text-center py-4 text-gray-400 animate-pulse">Memuat slot...</div>
+            </div>
+            <div id="error-msg" class="hidden mt-4 text-center text-red-500 text-xs">
+                Gagal koneksi ke server Hazi Studio.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WA_NUMBER = "6288271187357"; // GANTI DENGAN NOMOR ASLI
+        const CONTAINER = document.getElementById('slot-container');
+        const API_URL = localStorage.getItem('hazi_api_url');
+
+        async function loadSlots() {
+            if (!API_URL) {
+                renderError("URL Server belum disetting admin.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/slots`);
+                if (!res.ok) throw new Error('Network error');
+                const data = await res.json();
+                renderSlots(data.slots);
+            } catch (err) {
+                renderError("Server Offline / Ganti Domain");
+            }
+        }
+
+        function renderSlots(slots) {
+            CONTAINER.innerHTML = '';
+            // Urutan jam hardcoded sesuai request
+            const hours = ["10:00", "11:00", "12:00", "13:00", "14:00"];
+
+            hours.forEach(time => {
+                const status = slots[time] || 'booked';
+                const isAvailable = status === 'available';
+                
+                const btn = document.createElement('button');
+                btn.className = `w-full p-4 rounded-xl flex justify-between items-center transition-all ${
+                    isAvailable 
+                    ? 'bg-white border-2 border-slate-900 shadow-sm hover:bg-slate-50 cursor-pointer group' 
+                    : 'bg-gray-200 border-2 border-transparent cursor-not-allowed opacity-60'
+                }`;
+                
+                btn.innerHTML = `
+                    <span class="font-bold text-lg ${isAvailable ? 'text-slate-900' : 'text-gray-500'}">${time}</span>
+                    <span class="text-xs font-bold uppercase px-2 py-1 rounded ${
+                        isAvailable ? 'bg-green-100 text-green-700' : 'bg-gray-300 text-gray-500'
+                    }">${status}</span>
+                `;
+
+                if (isAvailable) {
+                    btn.onclick = () => openWA(time);
+                }
+                CONTAINER.appendChild(btn);
+            });
+        }
+
+        function openWA(time) {
+            const text = `Halo bang, saya mau booking cukur di Hazi Studio dengan barber Fahrul jam ${time} hari ini.`;
+            const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
+            window.location.href = url;
+        }
+
+        function renderError(msg) {
+            CONTAINER.innerHTML = `<div class="text-center text-red-500 py-4 font-bold">${msg}</div>`;
+        }
+
+        loadSlots();
+    </script>
+</body>
+</html>
